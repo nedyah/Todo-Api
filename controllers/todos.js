@@ -1,5 +1,5 @@
 const Todo = require('../models').todo;
-const todoItem = require('../models').todoItems;
+const todoItems = require('../models').todoitem;
 
 module.exports = {
     create(req, res) {
@@ -10,28 +10,46 @@ module.exports = {
         .then(todo => res.status(201).send(todo))
         .catch(error => res.status(400).send(error));
     },
-    list(req, res) {
+    /*list(req, res) {
         return Todo
-        .all()
+        .findAll()
         .then(todo => res.status(200).send(todo))
         .catch(error => res.status(400).send(error));
-    },
-    retrieve(req, res) {
+    },*/
+    list(req, res) {
         return Todo
-            .findById(req.params.todoId, {
+          .findAll({
             include: [{
-                model: todoItem,
-                as: 'todoItems',
+              model: todoItems,
+              as: 'todoItems',
             }],
-        })
-        .then(todo => {
+          })
+          .then(todos => res.status(200).send(todos))
+          .catch(error => res.status(400).send(error));
+      },
+      update(req, res) {
+          console.log(req.body.title + " " + req.params.todoId)
+        return Todo
+          .findByPk(req.params.todoId, {
+            include: [{
+              model: todoItems,
+              as: 'todoItems',
+            }],
+          })
+          .then(todo => {
             if (!todo) {
-                return res.status(404).send({
-                    message: 'Todo not found',
-                });
+              return res.status(404).send({
+                message: 'Todo Not Found',
+              });
             }
-            return res.status(200).send(todo);
-        })
-        .catch(error => res.status(400).send(error));
-    },
+            return todo
+              .update({
+                title: req.body.title || todo.title,
+              })
+              .then(() => res.status(200).send(todo))  // Send back the updated todo.
+              .catch((error) => res.status(400).send(error));
+          })
+          .catch((error) => res.status(400).send(error));
+      },
+     
 };
